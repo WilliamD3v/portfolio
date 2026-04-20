@@ -2,32 +2,21 @@
 
 import { useAuth } from "@/context/authContext";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function AuthPage() {
   const { signIn, alert, loading, user } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
 
-  const authMode = searchParams.get("auth");
-
-  const pageTitle = useMemo(() => {
-    if (authMode === "login") return "Entrar na sua conta";
-    return "Acesso ao sistema";
-  }, [authMode]);
-
-  const pageSubtitle = useMemo(() => {
-    if (authMode === "login") {
-      return "Faça login para acessar sua área administrativa com segurança.";
-    }
-    return "Informe suas credenciais para continuar.";
-  }, [authMode]);
+  const pageTitle = "Entrar na sua conta";
+  const pageSubtitle =
+    "Faça login para acessar sua área administrativa com segurança.";
 
   useEffect(() => {
     if (user?._id) {
@@ -93,7 +82,7 @@ export default function AuthPage() {
                   Integração simples
                 </p>
                 <p className="mt-2 text-sm text-slate-300">
-                  Já preparada para usar com seu `AuthContext` e redirecionamento
+                  Já preparada para usar com seu AuthContext e redirecionamento
                   após login.
                 </p>
               </div>
@@ -169,7 +158,9 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  {(localError || alert?.type === "error" || alert?.type === "success") && (
+                  {(localError ||
+                    alert?.type === "error" ||
+                    alert?.type === "success") && (
                     <div
                       className={`rounded-2xl border px-4 py-3 text-sm ${
                         alert?.type === "success"

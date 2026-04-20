@@ -3,15 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 interface DesignDetailsPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
-export default function DesignDetailsPage({
+export default async function DesignDetailsPage({
   params,
 }: DesignDetailsPageProps) {
-  const project = designProjects.find((item) => item.slug === params.slug);
+  const { slug } = await params;
+
+  const project = designProjects.find((item) => item.slug === slug);
 
   if (!project) {
     notFound();
