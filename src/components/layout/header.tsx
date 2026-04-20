@@ -127,12 +127,14 @@ export function Header() {
         </div>
       </Container>
 
+      {/* MENU MOBILE */}
       <div
         className={cn(
           "lg:hidden",
           open ? "pointer-events-auto" : "pointer-events-none"
         )}
       >
+        {/* OVERLAY */}
         <div
           onClick={() => setOpen(false)}
           className={cn(
@@ -141,9 +143,10 @@ export function Header() {
           )}
         />
 
+        {/* CARD COM SCROLL */}
         <div
           className={cn(
-            "fixed inset-x-4 top-[84px] rounded-[2rem] border border-white/10 bg-slate-950/95 p-4 shadow-2xl transition-all duration-200",
+            "fixed inset-x-4 top-[84px] max-h-[calc(100dvh-100px)] overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/95 p-4 shadow-2xl transition-all duration-200",
             open ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"
           )}
         >
