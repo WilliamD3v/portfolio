@@ -49,44 +49,77 @@ export function ScheduleForm() {
     return `ATD-${year}${random}`;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function formatPhone(value: string) {
+    const numbers = value.replace(/\D/g, "").slice(0, 11);
 
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      const newTicket = generateTicket();
-
-      const response = await api.post("/schedule/create", {
-        ticketNumber: newTicket,
-        name,
-        phone,
-        email,
-        notes,
-        service: selectedService,
-      });
-
-      const data: ScheduleResponse = response.data;
-
-      setTicketNumber(data?.data?.ticketNumber || newTicket);
-      setSubmitted(true);
-
-      setName("");
-      setPhone("");
-      setNotes("");
-      setSelectedService(services[0]);
-      setShowMobileSummary(true);
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        "Não foi possível enviar sua solicitação.";
-
-      setErrorMessage(message);
-    } finally {
-      setIsLoading(false);
+    if (numbers.length <= 2) {
+      return numbers;
     }
+
+    if (numbers.length <= 6) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    }
+
+    if (numbers.length <= 10) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(
+        2,
+        6
+      )}-${numbers.slice(6)}`;
+    }
+
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(
+      2,
+      7
+    )}-${numbers.slice(7)}`;
   }
+
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+
+  setErrorMessage("");
+
+  const onlyNumbers = phone.replace(/\D/g, "");
+
+  if (onlyNumbers.length < 10) {
+    setErrorMessage("Informe um WhatsApp válido.");
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+
+    const newTicket = generateTicket();
+
+    const response = await api.post("/schedule/create", {
+      ticketNumber: newTicket,
+      name,
+      phone,
+      email,
+      notes,
+      service: selectedService,
+    });
+
+    const data: ScheduleResponse = response.data;
+
+    setTicketNumber(data?.data?.ticketNumber || newTicket);
+    setSubmitted(true);
+
+    setName("");
+    setPhone("");
+    setEmail("");
+    setNotes("");
+    setSelectedService(services[0]);
+    setShowMobileSummary(true);
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message ||
+      "Não foi possível enviar sua solicitação.";
+
+    setErrorMessage(message);
+  } finally {
+    setIsLoading(false);
+  }
+}
 
   const cardClass = "rounded-[1.35rem] border px-4 py-4 text-left transition";
 
@@ -212,9 +245,11 @@ export function ScheduleForm() {
                   <label className="grid gap-2 text-sm text-slate-200">
                     WhatsApp
                     <input
+                      type="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(formatPhone(e.target.value))}
                       placeholder="(00) 00000-0000"
+                      maxLength={15}
                       className="h-12 rounded-2xl border border-white/10 bg-slate-950/60 px-4 text-white outline-none transition focus:border-brand"
                       required
                     />
@@ -224,11 +259,14 @@ export function ScheduleForm() {
 
                 <label className="grid gap-2 text-sm text-slate-200">
                   E-mail
-                  <input value={email}
+                  <input
+                    type="email"
+                    value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="exemplo@gmail.com"
                     className="h-12 rounded-2xl border border-white/10 bg-slate-950/60 px-4 text-white outline-none transition focus:border-brand"
-                    required />
+                    required
+                  />
                 </label>
 
                 <div>
@@ -259,6 +297,7 @@ export function ScheduleForm() {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Me conte rapidamente o que você precisa"
                     rows={5}
+                    required
                     className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-4 text-white outline-none transition focus:border-brand"
                   />
                 </label>

@@ -9,6 +9,8 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { useMenu } from "@/context/MenuContext";
+
 const links = [
   { href: "/", label: "Início" },
   { href: "/sobre", label: "Sobre" },
@@ -21,7 +23,7 @@ const links = [
 ];
 
 export function Header() {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useMenu();
   const [dashboardHref, setDashboardHref] = useState<string | null>(null);
 
   const router = useRouter();

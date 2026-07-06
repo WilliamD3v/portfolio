@@ -15,14 +15,11 @@ import {
   Wrench,
 } from "lucide-react";
 
-import { MdDoNotDisturbOn } from "react-icons/md";
-
-import { GiConfirmed } from "react-icons/gi";
-
 
 import { Container } from "@/components/ui/container";
-import { getSchedules } from "@/hooks/schedules";
+import { getApprovedSchedules, getPendingSchedules, getSchedules } from "@/hooks/schedules";
 import axios from "@/lib/axios";
+import ScheduleCard from "@/components/schedulecard";
 
 type ScheduleProps = {
   _id: string;
@@ -63,18 +60,28 @@ function formatDateTime(dateString: string) {
 export default function AdminSchedulesPage() {
   const [search, setSearch] = useState("");
 
-
-  const [openDescriptionId, setOpenDescriptionId] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
+  const [activeTab, setActiveTab] = useState<"pending" | "approved">("pending");
 
   const {
     data: schedules,
+    refetch,
     isLoading,
     isError,
   } = useQuery<ScheduleProps[]>({
     queryKey: ["schedules"],
     queryFn: getSchedules,
   });
+
+
+  const { data: pendingSchedules, refetch: refetchPending } = useQuery<ScheduleProps[]>({
+    queryKey: ["pending"],
+    queryFn: getPendingSchedules
+  })
+
+  const { data: approvedSchedules, refetch: refetchApproved } = useQuery<ScheduleProps[]>({
+    queryKey: ["approved"],
+    queryFn: getApprovedSchedules
+  })
 
   const filteredSchedules = useMemo(() => {
     if (!schedules) return [];
@@ -122,19 +129,36 @@ export default function AdminSchedulesPage() {
 
   const groupedEntries = Object.entries(groupedSchedules);
 
-const handleDelete = async (id: string) => {
-  try {
-    await axios.post(`schedule/del-schedules/${id}`, {
-      description,
-    });
-    
-    setOpenDescriptionId(null);
-    setDescription("");
+  const handleDelete = async (id: string, description: string) => {
+    try {
+      if (!description.trim()) {
+        alert("Motivo do cancelamento é obrigatório.");
+        return;
+      }
 
-  } catch (error) {
-    console.error(error);
+      await axios.post(`schedule/del-schedules/${id}`, {
+        description: description.trim(),
+      });
+
+      await refetch();
+      await refetchPending();
+      await refetchApproved();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleStatusSchedules = async (id: string) => {
+    try {
+      await axios.post(`schedule/status/${id}`)
+
+      await refetch();
+      await refetchPending();
+      await refetchApproved();
+    } catch (error) {
+      console.log(error)
+    }
   }
-};
 
   return (
     <section className="min-h-screen bg-slate-950 pb-14 pt-8 sm:pb-16 sm:pt-10">
@@ -247,130 +271,56 @@ const handleDelete = async (id: string) => {
                     </div>
                   </div>
 
-                  <div className="grid gap-5 xl:grid-cols-2">
-                    {items.map((schedule, index) => (
-                      <article
-                        key={schedule._id}
-                        className="rounded-[2rem] border border-white/10 bg-white/5 p-5 transition hover:border-brand/30 hover:bg-white/[0.07] sm:p-6"
-                      >
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                              Ticket
-                            </p>
-                            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-4 py-2 text-sm font-bold text-white">
-                              <Ticket className="h-4 w-4 text-brand-light" />
-                              {schedule.ticketNumber}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-2 text-xs font-medium text-slate-300">
-                            <Clock3 className="h-4 w-4" />
-                            {formatDateTime(schedule.createdAt)}
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex justify-between items-center gap-2">
-                          <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
-                            Posição na fila: {index + 1}
-                          </span>
-
-
-                          <div className="flex">
-                            <div className="flex items-center text-[20px] border border-white/10 bg-slate-950/70 py-1 px-2 rounded-2xl text-xs">
-                              <button className="text-red-600" onClick={() => setOpenDescriptionId(schedule._id)}>
-                                <MdDoNotDisturbOn />
-                              </button>
-                            </div>
-
-                            <div className="flex items-center text-[20px] border border-white/10 bg-slate-950/70 py-1 px-2 rounded-2xl text-xs">
-                              <button className="text-green-500">
-                                <GiConfirmed />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-
-                        {openDescriptionId === schedule._id && (
-                          <label className="mt-4 grid relateive top-3 text-sm text-slate-200">
-                            <input
-                              value={description}
-                              onChange={(e) => setDescription(e.target.value)}
-                              placeholder="Motivo do cancelamento"
-                              className="h-12 rounded-2xl border border-white/10 bg-slate-950/60 px-4 text-white outline-none transition focus:border-brand"
-                            />
-
-                            <button onClick={() => handleDelete(schedule._id)} className="mt-4" >
-                              Confirmar
-                            </button>
-                          </label>
-                        )}
-
-                        <div className="mt-5 grid gap-3">
-                          <div className="rounded-[1.35rem] border border-white/10 bg-slate-950/70 p-4">
-                            <div className="flex items-start gap-3">
-                              <span className="rounded-2xl bg-white/5 p-3 text-slate-300">
-                                <User2 className="h-4 w-4" />
-                              </span>
-                              <div>
-                                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-                                  Cliente
-                                </p>
-                                <p className="mt-2 text-sm font-semibold text-white">
-                                  {schedule.name}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="rounded-[1.35rem] border border-white/10 bg-slate-950/70 p-4">
-                            <div className="flex items-start gap-3">
-                              <span className="rounded-2xl bg-white/5 p-3 text-slate-300">
-                                <Phone className="h-4 w-4" />
-                              </span>
-                              <div>
-                                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-                                  WhatsApp
-                                </p>
-                                <p className="mt-2 text-sm font-semibold text-white">
-                                  {schedule.phone}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="rounded-[1.35rem] border border-white/10 bg-slate-950/70 p-4">
-                            <div className="flex items-start gap-3">
-                              <span className="rounded-2xl bg-white/5 p-3 text-slate-300">
-                                <Wrench className="h-4 w-4" />
-                              </span>
-                              <div>
-                                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-                                  Serviço
-                                </p>
-                                <p className="mt-2 text-sm font-semibold text-white">
-                                  {schedule.service}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="rounded-[1.35rem] border border-white/10 bg-slate-950/70 p-4">
-                            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
-                              Observações
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-slate-300">
-                              {schedule.notes?.trim()
-                                ? schedule.notes
-                                : "Nenhuma observação informada."}
-                            </p>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mb-8 flex w-fit rounded-2xl border border-white/10 bg-slate-900 p-1">
+            <button
+              onClick={() => setActiveTab("pending")}
+              className={`rounded-xl px-6 py-3 text-sm font-semibold transition-all ${activeTab === "pending"
+                ? "bg-brand text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+                }`}
+            >
+              Pendentes ({pendingSchedules?.length ?? 0})
+            </button>
+
+            <button
+              onClick={() => setActiveTab("approved")}
+              className={`rounded-xl px-6 py-3 text-sm font-semibold transition-all ${activeTab === "approved"
+                ? "bg-emerald-600 text-white shadow-lg"
+                : "text-slate-400 hover:text-white"
+                }`}
+            >
+              Aprovados ({approvedSchedules?.length ?? 0})
+            </button>
+          </div>
+
+          {activeTab === "pending" && (
+            <div className="grid gap-6 xl:grid-cols-2">
+              {pendingSchedules?.map((schedule) => (
+                <ScheduleCard
+                  key={schedule._id}
+                  schedule={schedule}
+                  onDelete={handleDelete}
+                  onStatus={handleStatusSchedules}
+                  refetch={refetchPending}
+                />
+              ))}
+            </div>
+          )}
+
+          {activeTab === "approved" && (
+            <div className="grid gap-6 xl:grid-cols-2">
+              {approvedSchedules?.map((schedule) => (
+                <ScheduleCard
+                  key={schedule._id}
+                  schedule={schedule}
+                  onDelete={handleDelete}
+                  refetch={refetchApproved}
+                />
               ))}
             </div>
           )}

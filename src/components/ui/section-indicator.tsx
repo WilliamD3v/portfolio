@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useMenu } from "@/context/MenuContext";
+
 const sections = [
   { id: "hero", label: "Início" },
   { id: "services", label: "Serviços" },
@@ -15,6 +17,8 @@ export function SectionIndicator() {
   const [active, setActive] = useState<string>("hero");
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const { open } = useMenu();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,6 +70,8 @@ export function SectionIndicator() {
     });
   };
 
+  if (open) return null;
+
   return (
     <>
       <div className="fixed left-3 top-1/2 z-50 hidden -translate-y-1/2 md:block lg:left-4 xl:left-5">
@@ -81,17 +87,15 @@ export function SectionIndicator() {
                   className="group flex items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-white/5"
                 >
                   <span
-                    className={`h-2 w-2 rounded-full transition ${
-                      isActive ? "bg-brand scale-125" : "bg-white/25"
-                    }`}
+                    className={`h-2 w-2 rounded-full transition ${isActive ? "bg-brand scale-125" : "bg-white/25"
+                      }`}
                   />
 
                   <span
-                    className={`text-[10px] font-semibold uppercase tracking-[0.18em] transition lg:text-[11px] ${
-                      isActive
+                    className={`text-[10px] font-semibold uppercase tracking-[0.18em] transition lg:text-[11px] ${isActive
                         ? "text-white"
                         : "text-white/45 group-hover:text-white/80"
-                    }`}
+                      }`}
                   >
                     {section.label}
                   </span>
@@ -118,16 +122,14 @@ export function SectionIndicator() {
                     itemRefs.current[section.id] = el;
                   }}
                   onClick={() => handleNavigate(section.id)}
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${
-                    isActive
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${isActive
                       ? "bg-brand text-slate-950"
                       : "bg-white/5 text-white/65"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      isActive ? "bg-slate-950" : "bg-white/35"
-                    }`}
+                    className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-slate-950" : "bg-white/35"
+                      }`}
                   />
                   {section.label}
                 </button>
